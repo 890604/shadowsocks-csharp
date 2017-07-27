@@ -7,22 +7,38 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
+using System.Windows.Forms;
 
 namespace Shadowsocks.Controller
 {
     public class UpdateChecker
     {
-        //private const string UpdateURL = "https://sourceforge.net/api/file/index/project-id/1817190/path/dist/mtime/desc/limit/10/rss";
-        private const string UpdateURL = "https://github.com/breakwa11/shadowsocks-rss/raw/master/shadowsocks-win.xml";
+        private const string UpdateURL = "https://raw.githubusercontent.com/breakwa11/breakwa11.github.io/master/update/ssr-win-4.0.xml";
 
         public string LatestVersionNumber;
         public string LatestVersionURL;
         public event EventHandler NewVersionFound;
 
         public const string Name = "ShadowsocksR";
-        public const string Copyright = "Copyright © BreakWall 2015";
-        public const string Version = "3.4.1";
-        public const string FullVersion = Version + " Beta";
+        public const string Copyright = "Copyright © BreakWa11 2017. Fork from Shadowsocks by clowwindy";
+        public const string Version = "4.6.1";
+#if !_DOTNET_4_0
+        public const string NetVer = "2.0";
+#elif !_CONSOLE
+        public const string NetVer = "4.0";
+#else
+        public const string NetVer = "";
+#endif
+        public const string FullVersion = Version +
+#if DEBUG
+        " Debug";
+#else
+/*
+        " Alpha";
+/*/
+        "";
+//*/
+#endif
 
         private static bool UseProxy = true;
 
@@ -34,7 +50,12 @@ namespace Shadowsocks.Controller
                 http.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36");
                 if (UseProxy)
                 {
-                    http.Proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
+                    WebProxy proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
+                    if (!string.IsNullOrEmpty(config.authPass))
+                    {
+                        proxy.Credentials = new NetworkCredential(config.authUser, config.authPass);
+                    }
+                    http.Proxy = proxy;
                 }
                 else
                 {
@@ -42,7 +63,7 @@ namespace Shadowsocks.Controller
                 }
                 //UseProxy = !UseProxy;
                 http.DownloadStringCompleted += http_DownloadStringCompleted;
-                http.DownloadStringAsync(new Uri(UpdateURL));
+                http.DownloadStringAsync(new Uri(UpdateURL + "?rnd=" + Util.Utils.RandUInt32().ToString()));
             }
             catch (Exception e)
             {
@@ -131,6 +152,12 @@ namespace Shadowsocks.Controller
             }
             string currentVersion = Version;
 
+            if (url.IndexOf("banned") > 0 && CompareVersion(version, currentVersion) == 0
+                || url.IndexOf("deprecated") > 0 && CompareVersion(version, currentVersion) > 0)
+            {
+                Application.Exit();
+                return false;
+            }
             return CompareVersion(version, currentVersion) > 0;
         }
 
@@ -172,6 +199,10 @@ namespace Shadowsocks.Controller
             }
             catch (Exception ex)
             {
+                if (e.Error != null)
+                {
+                    Logging.Debug(e.Error.ToString());
+                }
                 Logging.Debug(ex.ToString());
                 if (NewVersionFound != null)
                 {

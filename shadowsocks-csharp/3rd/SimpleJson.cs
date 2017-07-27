@@ -46,6 +46,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 #if SIMPLE_JSON_DYNAMIC
 using System.Dynamic;
 #endif
@@ -992,6 +993,11 @@ namespace SimpleJson
                 IDictionary<string, string> dict = (IDictionary<string, string>)value;
                 success = SerializeObject(jsonSerializerStrategy, dict.Keys, dict.Values, builder, indent);
             }
+            else if (value != null && ReflectionUtils.IsTypeDictionary(value.GetType()))
+            {
+                IDictionary dict = (IDictionary)value;
+                success = SerializeObject(jsonSerializerStrategy, dict.Keys, dict.Values, builder, indent);
+            }
             else if (value is IEnumerable)
                 success = SerializeArray(jsonSerializerStrategy, (IEnumerable)value, builder, indent);
             else if (IsNumeric(value))
@@ -1287,6 +1293,12 @@ namespace SimpleJson
                         obj = DateTime.ParseExact(str, Iso8601Format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
                     else if (type == typeof(Guid) || (ReflectionUtils.IsNullableType(type) && Nullable.GetUnderlyingType(type) == typeof(Guid)))
                         obj = new Guid(str);
+                    else if (type == typeof(Font) ||
+                             (ReflectionUtils.IsNullableType(type) && Nullable.GetUnderlyingType(type) == typeof(Font)))
+                    {
+                        var cvt = new FontConverter();
+                        obj = cvt.ConvertFromInvariantString(str);
+                    }
                     else
                         obj = str;
                 }
@@ -1304,6 +1316,10 @@ namespace SimpleJson
                 obj = value;
             else if (value == null)
                 obj = null;
+            else if (value is long && typeof(Enum).IsAssignableFrom(type))
+            {
+                obj = Enum.ToObject(type, (long) value);
+            }
             else if ((value is long && type == typeof(long)) || (value is double && type == typeof(double)))
                 obj = value;
             else if ((value is double && type != typeof(double)) || (value is long && type != typeof(long)))
@@ -1439,6 +1455,11 @@ namespace SimpleJson
                 output = input.ToString();
             else if (input is Enum)
                 output = SerializeEnum((Enum)input);
+            else if (input is Font)
+            {
+                var cvt = new FontConverter();
+                output = cvt.ConvertToInvariantString((Font) input);
+            }
             else
             {
                 returnValue = false;

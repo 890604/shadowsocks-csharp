@@ -61,38 +61,30 @@ namespace Shadowsocks.Properties {
         }
         
         /// <summary>
-        ///   查找 System.Byte[] 类型的本地化资源。
-        /// </summary>
-        internal static byte[] abp_js {
-            get {
-                object obj = ResourceManager.GetObject("abp_js", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 # translation for Simplified Chinese
         ///
         ///Shadowsocks=Shadowsocks
         ///
         ///# Menu items
         ///
-        ///Enable System Proxy=启用系统代理
+        ///Disable system proxy=不修改系统(IE)代理
         ///Mode=系统代理模式
         ///PAC=PAC 模式
         ///Global=全局模式
+        ///Proxy rule=代理规则
+        ///Bypass LAN=绕过局域网
+        ///Bypass LAN &amp;&amp; China=绕过局域网和大陆
+        ///Bypass LAN &amp;&amp; not China=绕过局域网和非大陆
+        ///Disable bypass=全局
         ///Servers=服务器
-        ///Edit Servers...=编辑服务器...
+        ///Edit servers...=编辑服务器...
+        ///Import servers from file...=从文件导入服务器...
+        ///Global settings...=选项设置...
         ///Start on Boot=开机启动
         ///Allow Clients from LAN=允许来自局域网的连接
-        ///Random Proxy=服务器负载均衡
-        ///Local PAC=使用本地 PAC
-        ///Online PAC=使用在线 PAC
-        ///Edit Local PAC File...=编辑本地 PAC 文件...
-        ///Update Local PAC from ChnIPList=从 ChnIPList 更新本地 PAC
-        ///Update Local PAC from GFWList=从 GFWList 更新本地 PAC
-        ///Edit User Rule for GFWList...=编辑 GFWList 的用户规则...
-        ///Show QRCode. [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        ///Load balance=服务器负载均衡
+        ///Same host for same address=优先相同节点连接同一地址
+        ///Enable domai [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         internal static string cn {
             get {
@@ -113,6 +105,16 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   查找 System.Byte[] 类型的本地化资源。
         /// </summary>
+        internal static byte[] libsscrypto64_dll {
+            get {
+                object obj = ResourceManager.GetObject("libsscrypto64_dll", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
         internal static byte[] mgwz_dll {
             get {
                 object obj = ResourceManager.GetObject("mgwz_dll", resourceCulture);
@@ -121,11 +123,23 @@ namespace Shadowsocks.Properties {
         }
         
         /// <summary>
-        ///   查找类似 listen-address __POLIPO_BIND_IP__:__POLIPO_BIND_PORT__
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap ngnl {
+            get {
+                object obj = ResourceManager.GetObject("ngnl", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 listen-address __PRIVOXY_BIND_IP__:__PRIVOXY_BIND_PORT__
         ///show-on-task-bar 0
         ///activity-animation 0
         ///forward-socks5 / 127.0.0.1:__SOCKS_PORT__ .
         ///hide-console
+        ///__BYPASS_ACTION__
+        ///
         /// 的本地化字符串。
         /// </summary>
         internal static string privoxy_conf {
@@ -202,6 +216,38 @@ namespace Shadowsocks.Properties {
         internal static string user_rule {
             get {
                 return ResourceManager.GetString("user_rule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 # translation for Traditional Chinese
+        ///
+        ///Shadowsocks=Shadowsocks
+        ///
+        ///# Menu items
+        ///
+        ///Disable system proxy=不修改系統(IE)代理
+        ///Mode=系統代理模式
+        ///PAC=PAC 模式
+        ///Global=全局模式
+        ///Proxy rule=代理規則
+        ///Bypass LAN=绕过區域網路
+        ///Bypass LAN &amp;&amp; China=绕过區域網路和大陸
+        ///Bypass LAN &amp;&amp; not China=绕过區域網路和非大陸
+        ///Disable bypass=全局
+        ///Servers=伺服器
+        ///Edit servers...=編輯伺服器...
+        ///Import servers from file...=從文件導入伺服器...
+        ///Global settings...=選項設置...
+        ///Start on Boot=開機啟動
+        ///Allow Clients from LAN=允許來自區域網路的連接
+        ///Load balance=伺服器負載均衡
+        ///Same host for same address=優先相同節點連接同一位址
+        ///Enable  [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        /// </summary>
+        internal static string zh_tw {
+            get {
+                return ResourceManager.GetString("zh_tw", resourceCulture);
             }
         }
     }

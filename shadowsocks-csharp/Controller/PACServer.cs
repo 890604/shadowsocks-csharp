@@ -18,14 +18,19 @@ namespace Shadowsocks.Controller
 
         public static string USER_RULE_FILE = "user-rule.txt";
 
-        FileSystemWatcher watcher;
+        public static string USER_ABP_FILE = "abp.txt";
+
+        FileSystemWatcher PACFileWatcher;
+        FileSystemWatcher UserRuleFileWatcher;
         private Configuration _config;
 
         public event EventHandler PACFileChanged;
+        public event EventHandler UserRuleFileChanged;
 
         public PACServer()
         {
             this.WatchPacFile();
+            this.WatchUserRuleFile();
         }
 
         public void UpdateConfiguration(Configuration config)
@@ -38,8 +43,10 @@ namespace Shadowsocks.Controller
             try
             {
                 string request = Encoding.UTF8.GetString(firstPacket, 0, length);
-                string[] lines = request.Split('\r', '\n');
-                bool hostMatch = false, pathMatch = false, useSocks = false;
+                string[] lines = request.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                bool hostMatch = false, pathMatch = false;
+                int socksType = 0;
+                string proxy = null;
                 foreach (string line in lines)
                 {
                     string[] kv = line.Split(new char[]{':'}, 2);
@@ -63,15 +70,53 @@ namespace Shadowsocks.Controller
                     }
                     else if (kv.Length == 1)
                     {
-                        if (line.IndexOf("pac") >= 0)
+                        if (!Util.Utils.isLocal(socket) || line.IndexOf("auth=" + _config.localAuthPassword) > 0)
                         {
-                            pathMatch = true;
+                            if (line.IndexOf(" /pac?") > 0 && line.IndexOf("GET") == 0)
+                            {
+                                string url = line.Substring(line.IndexOf(" ") + 1);
+                                url = url.Substring(0, url.IndexOf(" "));
+                                pathMatch = true;
+                                int port_pos = url.IndexOf("port=");
+                                if (port_pos > 0)
+                                {
+                                    string port = url.Substring(port_pos + 5);
+                                    if (port.IndexOf("&") >= 0)
+                                    {
+                                        port = port.Substring(0, port.IndexOf("&"));
+                                    }
+
+                                    int ip_pos = url.IndexOf("ip=");
+                                    if (ip_pos > 0)
+                                    {
+                                        proxy = url.Substring(ip_pos + 3);
+                                        if (proxy.IndexOf("&") >= 0)
+                                        {
+                                            proxy = proxy.Substring(0, proxy.IndexOf("&"));
+                                        }
+                                        proxy += ":" + port + ";";
+                                    }
+                                    else
+                                    {
+                                        proxy = "127.0.0.1:" + port + ";";
+                                    }
+                                }
+
+                                if (url.IndexOf("type=socks4") > 0 || url.IndexOf("type=s4") > 0)
+                                {
+                                    socksType = 4;
+                                }
+                                if (url.IndexOf("type=socks5") > 0 || url.IndexOf("type=s5") > 0)
+                                {
+                                    socksType = 5;
+                                }
+                            }
                         }
                     }
                 }
                 if (hostMatch && pathMatch)
                 {
-                    SendResponse(firstPacket, length, socket, useSocks);
+                    SendResponse(firstPacket, length, socket, socksType, proxy);
                     return true;
                 }
                 return false;
@@ -121,7 +166,7 @@ namespace Shadowsocks.Controller
             }
         }
 
-        public void SendResponse(byte[] firstPacket, int length, Socket socket, bool useSocks)
+        public void SendResponse(byte[] firstPacket, int length, Socket socket, int socksType, string setProxy)
         {
             try
             {
@@ -129,12 +174,25 @@ namespace Shadowsocks.Controller
 
                 IPEndPoint localEndPoint = (IPEndPoint)socket.LocalEndPoint;
 
-                string proxy = GetPACAddress(firstPacket, length, localEndPoint, useSocks);
+                string proxy =
+                    setProxy == null ? GetPACAddress(firstPacket, length, localEndPoint, socksType) :
+                    socksType == 5 ? "SOCKS5 " + setProxy :
+                    socksType == 4 ? "SOCKS " + setProxy :
+                    "PROXY " + setProxy;
 
-                pac = pac.Replace("__PROXY__", proxy);
+                if (_config.pacDirectGoProxy && _config.proxyEnable)
+                {
+                    if (_config.proxyType == 0)
+                        pac = pac.Replace("__DIRECT__", "SOCKS5 " + _config.proxyHost + ":" +  _config.proxyPort.ToString() + ";DIRECT;");
+                    else if (_config.proxyType == 1)
+                        pac = pac.Replace("__DIRECT__", "PROXY " + _config.proxyHost + ":" + _config.proxyPort.ToString() + ";DIRECT;");
+                }
+                else
+                    pac = pac.Replace("__DIRECT__", "DIRECT;");
+                pac = pac.Replace("__PROXY__", proxy + "DIRECT;");
 
                 string text = String.Format(@"HTTP/1.1 200 OK
-Server: Shadowsocks
+Server: ShadowsocksR
 Content-Type: application/x-ns-proxy-autoconfig
 Content-Length: {0}
 Connection: Close
@@ -142,11 +200,11 @@ Connection: Close
 ", System.Text.Encoding.UTF8.GetBytes(pac).Length) + pac;
                 byte[] response = System.Text.Encoding.UTF8.GetBytes(text);
                 socket.BeginSend(response, 0, response.Length, 0, new AsyncCallback(SendCallback), socket);
-                Util.Utils.ReleaseMemory();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                socket.Shutdown(SocketShutdown.Both);
                 socket.Close();
             }
         }
@@ -156,7 +214,8 @@ Connection: Close
             Socket conn = (Socket)ar.AsyncState;
             try
             {
-                conn.Shutdown(SocketShutdown.Send);
+                conn.Shutdown(SocketShutdown.Both);
+                conn.Close();
             }
             catch
             { }
@@ -164,18 +223,34 @@ Connection: Close
 
         private void WatchPacFile()
         {
-            if (watcher != null)
+            if (PACFileWatcher != null)
             {
-                watcher.Dispose();
+                PACFileWatcher.Dispose();
             }
-            watcher = new FileSystemWatcher(Directory.GetCurrentDirectory());
-            watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            watcher.Filter = PAC_FILE;
-            watcher.Changed += Watcher_Changed;
-            watcher.Created += Watcher_Changed;
-            watcher.Deleted += Watcher_Changed;
-            watcher.Renamed += Watcher_Changed;
-            watcher.EnableRaisingEvents = true;
+            PACFileWatcher = new FileSystemWatcher(Directory.GetCurrentDirectory());
+            PACFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
+            PACFileWatcher.Filter = PAC_FILE;
+            PACFileWatcher.Changed += Watcher_Changed;
+            PACFileWatcher.Created += Watcher_Changed;
+            PACFileWatcher.Deleted += Watcher_Changed;
+            PACFileWatcher.Renamed += Watcher_Changed;
+            PACFileWatcher.EnableRaisingEvents = true;
+        }
+
+        private void WatchUserRuleFile()
+        {
+            if (UserRuleFileWatcher != null)
+            {
+                UserRuleFileWatcher.Dispose();
+            }
+            UserRuleFileWatcher = new FileSystemWatcher(Directory.GetCurrentDirectory());
+            UserRuleFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
+            UserRuleFileWatcher.Filter = USER_RULE_FILE;
+            UserRuleFileWatcher.Changed += UserRuleFileWatcher_Changed;
+            UserRuleFileWatcher.Created += UserRuleFileWatcher_Changed;
+            UserRuleFileWatcher.Deleted += UserRuleFileWatcher_Changed;
+            UserRuleFileWatcher.Renamed += UserRuleFileWatcher_Changed;
+            UserRuleFileWatcher.EnableRaisingEvents = true;
         }
 
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
@@ -186,7 +261,15 @@ Connection: Close
             }
         }
 
-        private string GetPACAddress(byte[] requestBuf, int length, IPEndPoint localEndPoint, bool useSocks)
+        private void UserRuleFileWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            if (UserRuleFileChanged != null)
+            {
+                UserRuleFileChanged(this, new EventArgs());
+            }
+        }
+
+        private string GetPACAddress(byte[] requestBuf, int length, IPEndPoint localEndPoint, int socksType)
         {
             //try
             //{
@@ -201,7 +284,15 @@ Connection: Close
             //{
             //    Console.WriteLine(e);
             //}
-            return (useSocks ? "SOCKS5 " : "PROXY ") + localEndPoint.Address + ":" + this._config.localPort + ";";
+            if (socksType == 5)
+            {
+                return "SOCKS5 " + localEndPoint.Address + ":" + this._config.localPort + ";";
+            }
+            else if (socksType == 4)
+            {
+                return "SOCKS " + localEndPoint.Address + ":" + this._config.localPort + ";";
+            }
+            return "PROXY " + localEndPoint.Address + ":" + this._config.localPort + ";";
         }
     }
 }

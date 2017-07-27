@@ -12,8 +12,7 @@
     <AssemblyName>ShadowsocksR</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <StartupObject>
-    </StartupObject>
+    <StartupObject>Shadowsocks.Program</StartupObject>
     <ApplicationIcon>shadowsocks.ico</ApplicationIcon>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <FileUpgradeFlags>
@@ -38,29 +37,27 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Net4.0x86\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\Net4.0x86\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-    <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\4.0\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;_DOTNET_4_0, PROTOCOL_STATISTICS</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\4.0\Release\</OutputPath>
+    <DefineConstants>TRACE;PROTOCOL_STATISTICS</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.VisualBasic" />
@@ -71,6 +68,14 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="3rd\opendns\DnsQuery.cs" />
+    <Compile Include="3rd\opendns\DnsResponse.cs" />
+    <Compile Include="3rd\opendns\Enum.cs" />
+    <Compile Include="3rd\opendns\RR\Address.cs" />
+    <Compile Include="3rd\opendns\RR\MX.cs" />
+    <Compile Include="3rd\opendns\RR\ResourceRecord.cs" />
+    <Compile Include="3rd\opendns\RR\ResourceRecordCollection.cs" />
+    <Compile Include="3rd\opendns\RR\SOA.cs" />
     <Compile Include="3rd\zxing\BarcodeFormat.cs" />
     <Compile Include="3rd\zxing\BaseLuminanceSource.cs" />
     <Compile Include="3rd\zxing\Binarizer.cs" />
@@ -124,32 +129,57 @@
     <Compile Include="3rd\zxing\ResultPoint.cs" />
     <Compile Include="3rd\zxing\ResultPointCallback.cs" />
     <Compile Include="3rd\zxing\WriterException.cs" />
+    <Compile Include="Controller\APIServer.cs" />
     <Compile Include="Controller\AutoStartup.cs" />
     <Compile Include="Controller\FileManager.cs" />
     <Compile Include="Controller\GFWListUpdater.cs" />
+    <Compile Include="Controller\HttpPortForwarder.cs" />
+    <Compile Include="Controller\HttpProxy.cs" />
+    <Compile Include="Controller\HttpProxyRunner.cs" />
     <Compile Include="Controller\I18N.cs" />
     <Compile Include="Controller\Listener.cs" />
     <Compile Include="Controller\Logging.cs" />
-    <Compile Include="Controller\PortForwarder.cs" />
-    <Compile Include="Controller\TDP.cs" />
+    <Compile Include="Controller\ProxyAuth.cs" />
+    <Compile Include="Controller\ProxySocket.cs" />
+    <Compile Include="Controller\Socks5Forwarder.cs" />
+    <Compile Include="Controller\SpeedTest.cs" />
     <Compile Include="Controller\UpdateChecker.cs" />
+    <Compile Include="Controller\UpdateFreeNode.cs" />
     <Compile Include="Encryption\EncryptorBase.cs" />
     <Compile Include="Encryption\EncryptorFactory.cs" />
     <Compile Include="Encryption\IVEncryptor.cs" />
-    <Compile Include="Encryption\PolarSSL.cs" />
-    <Compile Include="Encryption\PolarSSLEncryptor.cs" />
+    <Compile Include="Encryption\Libcrypto.cs" />
+    <Compile Include="Encryption\LibcryptoEncryptor.cs" />
+    <Compile Include="Encryption\MbedTLS.cs" />
+    <Compile Include="Encryption\MbedTLSEncryptor.cs" />
+    <Compile Include="Encryption\RSA.cs" />
     <Compile Include="Encryption\Sodium.cs" />
     <Compile Include="Encryption\SodiumEncryptor.cs" />
-    <Compile Include="Encryption\TableEncryptor.cs" />
     <Compile Include="Encryption\IEncryptor.cs" />
     <Compile Include="Controller\PACServer.cs" />
+    <Compile Include="Model\Host.cs" />
+    <Compile Include="Model\IPRangeSet.cs" />
+    <Compile Include="Model\IPSegment.cs" />
+    <Compile Include="Model\LRUCache.cs" />
+    <Compile Include="Model\MinSearchTree.cs" />
     <Compile Include="Model\Server.cs" />
     <Compile Include="Model\Configuration.cs" />
+    <Compile Include="Model\ServerSelectStrategy.cs" />
+    <Compile Include="Model\ServerSpeedLog.cs" />
+    <Compile Include="Obfs\Auth.cs" />
+    <Compile Include="Obfs\AuthChain.cs" />
+    <Compile Include="Obfs\HttpSimpleObfs.cs" />
+    <Compile Include="Obfs\IObfs.cs" />
+    <Compile Include="Obfs\ObfsBase.cs" />
+    <Compile Include="Obfs\ObfsFactory.cs" />
+    <Compile Include="Obfs\Plain.cs" />
+    <Compile Include="Obfs\VerifySimpleObfs.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Util\Base64.cs" />
     <Compile Include="Util\CRC.cs" />
     <Compile Include="Util\Util.cs" />
     <Compile Include="View\ConfigForm.cs">
@@ -159,26 +189,61 @@
       <DependentUpon>ConfigForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Controller\Local.cs" />
-    <Compile Include="Controller\PolipoRunner.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Controller\ShadowsocksController.cs" />
     <Compile Include="Controller\SystemProxy.cs" />
-    <Compile Include="View\MenuViewController.cs" />
-    <Compile Include="View\QRCodeForm.cs">
+    <Compile Include="View\InputPassword.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="View\QRCodeForm.Designer.cs">
-      <DependentUpon>QRCodeForm.cs</DependentUpon>
+    <Compile Include="View\InputPassword.Designer.cs">
+      <DependentUpon>InputPassword.cs</DependentUpon>
+    </Compile>
+    <Compile Include="View\LogForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="View\LogForm.Designer.cs">
+      <DependentUpon>LogForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="View\MenuViewController.cs" />
+    <Compile Include="View\PortSettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="View\PortSettingsForm.Designer.cs">
+      <DependentUpon>PortSettingsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="View\QRCodeSplashForm.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="View\ResetPassword.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="View\ResetPassword.Designer.cs">
+      <DependentUpon>ResetPassword.cs</DependentUpon>
     </Compile>
     <Compile Include="View\ServerLogForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="View\ServerLogForm.Designer.cs">
       <DependentUpon>ServerLogForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="View\SettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="View\SettingsForm.Designer.cs">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="View\ShowTextForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="View\ShowTextForm.designer.cs">
+      <DependentUpon>ShowTextForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="View\SubscribeForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="View\SubscribeForm.designer.cs">
+      <DependentUpon>SubscribeForm.cs</DependentUpon>
     </Compile>
     <EmbeddedResource Include="View\ConfigForm.resx">
       <DependentUpon>ConfigForm.cs</DependentUpon>
@@ -189,21 +254,37 @@
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="View\QRCodeForm.resx">
-      <DependentUpon>QRCodeForm.cs</DependentUpon>
+    <EmbeddedResource Include="View\InputPassword.resx">
+      <DependentUpon>InputPassword.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="View\LogForm.resx">
+      <DependentUpon>LogForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="View\PortSettingsForm.resx">
+      <DependentUpon>PortSettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="View\ResetPassword.resx">
+      <DependentUpon>ResetPassword.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="View\ServerLogForm.resx">
       <DependentUpon>ServerLogForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="View\SettingsForm.resx">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="View\ShowTextForm.resx">
+      <DependentUpon>ShowTextForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="View\SubscribeForm.resx">
+      <DependentUpon>SubscribeForm.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
     <None Include="app.manifest">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Data\abp.js.gz" />
     <None Include="Data\libsscrypto.dll.gz" />
     <None Include="Data\mgwz.dll.gz" />
     <None Include="Data\privoxy.exe.gz" />
-    <None Include="Data\proxy.pac.txt.gz" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Properties\DataSources\Shadowsocks.View.ConfigForm.datasource" />
@@ -248,6 +329,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
